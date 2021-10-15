@@ -28,7 +28,7 @@ int main (){
     for(int i=0;i<p.length();i++) 
         p[i]=table[i]^c[i];
     
-    cout <<"sbox :"<<table<<endl;
+    cout <<"keystring :"<<table<<endl;
     cout <<"ciphers : "<<c<<endl;
     cout << "plaintext : "<<p<<endl;
     return 0;
