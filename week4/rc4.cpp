@@ -3,13 +3,10 @@
 using namespace std;
 
 int main (){
-    string p;
-    string c;
+    string p,c,table;
     string k = "TEAM3rc4";
-    string table;
     int s[256];
-    int j = 0;
-    int t = 0;
+    int j = 0,t = 0;
 
     cin >> p;
     c = p;
@@ -17,7 +14,7 @@ int main (){
     for(int i = 0;i<256;i++)
         s[i] = i;
     for(int i = 0;i<256;i++){
-        j = (j + s[i]+k[i%k.length()])%256;
+        j = (j + s[i] + k[i%k.length()])%256;
         swap(s[i],s[j]);
     }
     j = 0;
