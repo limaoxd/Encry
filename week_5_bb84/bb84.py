@@ -1,7 +1,7 @@
 import numpy as np
 import random as rd
 import sys, os
-import matplotlib.pyplot as plt
+#mport matplotlib.pyplot as plt
 import qiskit.result.result as result
 
 from qiskit import QuantumCircuit as qc
@@ -9,27 +9,30 @@ from qiskit import QuantumRegister as qr
 from qiskit import ClassicalRegister as cr
 from qiskit import execute, BasicAer, IBMQ
 
+IBMQ.save_account('081a82898f9ef0dc8c984319f226a3638e039caa51f48da3c3a413207ec77897c2e18ca676494f03c20df0205edec51827bef2f91dcb5e6362bd9a0a27c639f2', overwrite=True)
+provider = IBMQ.load_account()
+
 class Alice:
     def prepare(self, n):
         qubits = int(4*n,)
         a = np.random.randint(2, size=qubits,) #Generate a random data bits
         b = np.random.randint(2, size=qubits,) #Generate a random data bits
-        print("Alice has generated random secret data bits, a: ", a)
-        print("She will arbitrarily encode these bits using random basis, b: ", b)
+        #print("Alice has generated random secret data bits, a: ", a)
+        #print("She will arbitrarily encode these bits using random basis, b: ", b)
         return (a, b)
 
 class Bob:
     def genRandomBasis(self, n):
         qubits = int(4*n)
         b = np.random.randint(2, size=qubits,)
-        print("Bob has chosen random basis, b': ", b)
+        #print("Bob has chosen random basis, b': ", b)
         return b
 
 class Eve:
     def genRandomBasis(self, n):
         qubits = int(4*n)
         b = np.random.randint(2, size=qubits,)
-        print("Eve has chosen random basis: ", b)
+        #print("Eve has chosen random basis: ", b)
         return b
 
 def BB84(keylen):
@@ -83,7 +86,7 @@ def detKey(a, bob_measure, b, b_bob, n):
     x = [b_i == b_bob_i for (b_i, b_bob_i) in zip(b, b_bob)]
 
     if np.sum(x) < n/2:
-        print("Aborting protocol. Less than 2n bits match between b and b'")
+        #print("Aborting protocol. Less than 2n bits match between b and b'")
         return False
     else:
         alice_bits = a[x]
@@ -94,28 +97,24 @@ def detKey(a, bob_measure, b, b_bob, n):
         key_alice = alice_bits[-n:]
         key_bob = bob_bits[-n:]
 
-        print("Alice has check bits: ", check_alice)
-        print("Bob has check bits: ", check_bob)
+        #print("Alice has check bits: ", check_alice)
+        #print("Bob has check bits: ", check_bob)
 
         mismatch = [k_a != k_b for (k_a, k_b) in zip(key_alice, key_bob)]
         error = (np.sum(mismatch)) / n
 
         epsilon = 0.05
         if error > epsilon:
-            print("Interference detected... Aborting!")
+            #print("Interference detected... Aborting!")
             return False
         else:
-            print("Successfully exchanged private key: ", key_alice)
+            #print("Successfully exchanged private key: ", key_alice)
             return True
 
 def testCir(shots, keylen):
-    IBMQ.delete_account
-    IBMQ.save_account('c81d9c6500e2c272304612ae6d7c87be2686aaecb71a8e9bdfc94d2ae39d6acce3be3ea7842776f7f0dee71555f89f0ccb4f77f4ec087e08ac719ce720d9386a', overwrite=True)
-    provider = IBMQ.load_account()
+    global provider
     backend = provider.backend.ibmq_qasm_simulator
     bbCir_1, bbCir_2, a, b, b_bob = BB84(keylen)
-
-    print("Simulating...")
 
     job_bob = execute(bbCir_1, backend = backend, timeout = 600, shots = shots)
     results_bob = job_bob.result()
@@ -129,90 +128,49 @@ def testCir(shots, keylen):
 
 keylen = 4
 (answer_bob, answer_eve, a, b, b_bob) = testCir(2**10, keylen)
-print("Discrete distribution of potential measurements by Bob: ", answer_bob)
-print("Discrete distribution of potential measurements by Bob with eavesdropping: ", answer_eve)
+#print("Discrete distribution of potential measurements by Bob: ", answer_bob)
+#print("Discrete distribution of potential measurements by Bob with eavesdropping: ", answer_eve)
 
 def getMeasurement(answer, answer_eve):
     bob_measure = list(rd.choice(list(answer.keys())))
     bob_measure = list(map(int, bob_measure))
     bob_measure = np.array(bob_measure)
     bob_measure = bob_measure[::-1]
-    print("Bob's measurement result: ", bob_measure)
+    #print("Bob's measurement result: ", bob_measure)
     
     bob_measure_eve = list(rd.choice(list(answer_eve.keys())))
     bob_measure_eve = list(map(int, bob_measure_eve))
     bob_measure_eve = np.array(bob_measure_eve)
     bob_measure_eve = bob_measure_eve[::-1]
-    print("Bob's measurement result with eavesdropping: ", bob_measure_eve)
+    #print("Bob's measurement result with eavesdropping: ", bob_measure_eve)
     
     return (bob_measure, bob_measure_eve)
     
 bob_measure, bob_measure_eve = getMeasurement(answer_bob, answer_eve)
 
-print("Key Exchange without eavesdropping: ")
+#print("Key Exchange without eavesdropping: ")
 result = detKey(a, bob_measure, b, b_bob, keylen)
-print("Key Exchange with eavesdropping: ")
+#print("Key Exchange with eavesdropping: ")
 result = detKey(a, bob_measure_eve, b, b_bob, keylen)        
-
-def plot_eve_undetected(probs):
-    
-    objects = ('2', '4', '8')
-    y_pos = np.arange(len(objects))
-    
-    plt.bar(y_pos, probs, align='center', alpha=0.5)
-    plt.xticks(y_pos, objects)
-    
-    plt.xlabel("Key Length")
-    plt.ylabel('Probability')
-    plt.title('Probability of Undetected Eavesdropping')
-    
-    plt.show()
-
-probs = []
 
 for n in [2, 4, 8]:
     succ = 0
     succ_eve = 0
-    for i in range(2**7):
-        print("Simulation round:", i)
+    for i in range(10):
+        #print(i)
         # Simulate one measurement with key length n = 4
         (answer, answer_eve, a, b, b_bob) = testCir(1, n)
         bob_measure, bob_measure_eve = getMeasurement(answer, answer_eve)
-        print("Key Exchange without eavesdropping: ")
         res = detKey(a, bob_measure, b, b_bob, keylen)
         # successful
         if res: 
             succ += 1
-        print("Key Exchange with eavesdropping: ")
         res = detKey(a, bob_measure_eve, b, b_bob, keylen)
         # successful
         if res: 
             succ_eve += 1
         
-    print("n=", n)
-    print("Successful key exchanges without Eve present: ", succ)
-    print("Successful key exchanges with Eve present: ", succ_eve)
+    #print("Successful key exchanges without Eve present: ", succ)
+    #print("Successful key exchanges with Eve present: ", succ_eve)
     p = (succ_eve) / (2**7)
-    probs.append(p)
-    
-plot_eve()
-plot_eve_undetected(probs)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    
+    print(n," ",p,"\n")
