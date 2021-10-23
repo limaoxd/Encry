@@ -1,7 +1,6 @@
 import numpy as np
 import random as rd
 import sys, os
-#import matplotlib.pyplot as plt
 import qiskit.result.result as result
 
 from qiskit import QuantumCircuit as qc
